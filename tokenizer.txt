@@ -1,0 +1,111 @@
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <limits>
+#include <iostream>
+#include <cstdlib>
+#include "json.hpp"  // nlohmann::json single-header
+
+// Print other stuff
+template<typename... Args> void print(const Args&... args) { (std::cout << ... << args) << std::endl; }
+
+using json = nlohmann::json;
+
+class BPETokenizer {
+public:
+    std::unordered_map<std::string, int> vocab;
+    std::unordered_map<std::string, int> merges;
+
+    void load_vocab(const std::string& path) {
+        std::ifstream in(path);
+        if (!in.is_open()) {
+            std::cerr << "Error: cannot open vocab file '" << path << "'\n";
+            std::exit(EXIT_FAILURE);
+        }
+        json j;
+        in >> j;  // parse JSON
+        for (auto it = j.begin(); it != j.end(); ++it) {
+            vocab[it.key()] = it.value().get<int>();
+        }
+    }
+
+    void load_merges(const std::string& path) {
+        std::ifstream in(path);
+        if (!in.is_open()) {
+            std::cerr << "Error: cannot open merges file '" << path << "'\n";
+            std::exit(EXIT_FAILURE);
+        }
+        std::string line;
+        std::getline(in, line);  // skip header
+        int rank = 0;
+        while (std::getline(in, line)) {
+            std::istringstream iss(line);
+            std::string a, b;
+            iss >> a >> b;
+            if (!a.empty() && !b.empty())
+                merges[a + " " + b] = rank++;
+        }
+    }
+
+    std::vector<std::string> encode_phrase(const std::string& raw) {
+        // Add leading space for GPT-2 style
+        std::string text = raw;
+        if (text.empty() || text[0] != ' ')
+            text = " " + text;
+
+        // Initialize tokens as individual characters
+        std::vector<std::string> tokens;
+        for (size_t i = 0; i < text.size(); ++i)
+            tokens.push_back(text.substr(i, 1));
+
+        // BPE merges
+        while (true) {
+            int best_rank = std::numeric_limits<int>::max();
+            int best_i = -1;
+            for (size_t i = 0; i + 1 < tokens.size(); ++i) {
+                std::string key = tokens[i] + " " + tokens[i + 1];
+                auto it = merges.find(key);
+                if (it != merges.end() && it->second < best_rank) {
+                    best_rank = it->second;
+                    best_i = static_cast<int>(i);
+                }
+            }
+            if (best_i < 0) break;
+            tokens[best_i] += tokens[best_i + 1];
+            tokens.erase(tokens.begin() + best_i + 1);
+        }
+
+        // Replace OOV tokens with <unk>
+        for (auto& t : tokens)
+            if (!vocab.count(t))
+                t = "<unk>";
+        return tokens;
+    }
+
+    std::vector<int> encode_ids(const std::string& phrase) {
+        auto toks = encode_phrase(phrase);
+        std::vector<int> ids;
+        for (auto& t : toks)
+            ids.push_back(vocab.count(t) ? vocab[t] : vocab["<unk>"]);
+        return ids;
+    }
+};
+
+int main(int argc, char* argv[]) {
+    BPETokenizer tok;
+    tok.load_vocab("database/vocab.json");
+    tok.load_merges("database/merges.txt");
+
+    std::string phrase = argc > 1 ? std::string(argv[1]) : "quantum physics is shit bro what is this fuck";
+    auto tokens = tok.encode_phrase(phrase);
+    auto ids = tok.encode_ids(phrase);
+
+    std::cout << "Tokens:\n";
+    for (auto& t : tokens) std::cout << "[" << t << "] ";
+    std::cout << "\nIDs:\n";
+    for (int id : ids) std::cout << id << " ";
+    std::cout << std::endl;
+    return 0;
+}
