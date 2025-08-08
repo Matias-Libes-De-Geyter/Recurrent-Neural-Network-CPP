@@ -14,46 +14,39 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
-using dmatrix = std::vector<std::vector<double>>;
-using dvector = std::vector<double>;
+using d_vector = std::vector<double>;
 
-
-class Matrix : public std::vector<std::vector<double>> {
+class Matrix {
 private:
 	size_t _rows;
 	size_t _cols;
+
+	d_vector _matrix;
+
 public:
-	Matrix();
-	Matrix(size_t row, size_t columns);
-	Matrix(dmatrix);
-	Matrix(dvector);
-	Matrix(double);
-	Matrix(std::initializer_list<std::initializer_list<double>>);
-	void operator=(std::initializer_list<std::initializer_list<double>>);
-	Matrix operator*(const Matrix&) const;
-	Matrix hadamard(const Matrix&) const;
-	Matrix operator*(const double&);
-	Matrix operator+(const Matrix&);
+	size_t rows() const { return _rows; };
+	size_t cols() const { return _cols; };
+
+	// Constructors
+	inline Matrix() {};
+	inline Matrix(size_t row, size_t columns) : _rows(row), _cols(columns), _matrix(d_vector(_rows* _cols, 0.0)) {};
+
+	Matrix& operator=(std::initializer_list<std::initializer_list<double>>);
+	Matrix operator*(const Matrix& B) const;
+	Matrix operator*(double b) const;
+	Matrix hadamard(const Matrix& B) const;
+
+	Matrix operator+(const Matrix& B) const;
 	Matrix& operator+=(const Matrix& B);
-	Matrix operator-(const Matrix&);
-	Matrix T();
+	Matrix operator-(const Matrix& B) const;
+
+	Matrix T() const;
 	Matrix addBias();
 	Matrix addBias_then_T();
-	Matrix T_then_removeBias();
 	Matrix removeBias();
-	Matrix derivReLU();
-	Matrix derivTanH();
-	Matrix setMaxToOne();
-	Matrix dropoutMask(const double&);
-	Matrix convolution(const Matrix&, const int&, const int&);
-	Matrix rotate180();
-	Matrix dilate(int stride);
-	double norm();
-	double l2norm();
-	size_t getRows() const;
-	size_t getCols() const;
-	Matrix& clip(double min_val, double max_val);
-	dvector getParams();
+
+	inline double& operator()(size_t i, size_t j) { return _matrix[i * _cols + j]; };
+	inline const double& operator()(size_t i, size_t j) const { return _matrix[i * _cols + j]; };
 };
 
 #endif

@@ -35,7 +35,7 @@ void TrainerClassifier::run() {
 			// Loss & accuracy
 			const Matrix& ypred = _model.getOutput();
 			epoch_loss += CELossFunction(ypred, Y);
-			if ((Y[0][0] < Y[0][1]) == (ypred[0][0] < ypred[0][1]))
+			if ((Y(0, 0) < Y(0, 1)) == (ypred(0, 0) < ypred(0, 1)))
 				correct++;
 		}
 

@@ -29,6 +29,7 @@ public:
 	void backpropagation(const std::vector<Matrix>& input, const Matrix& y_real);
 
 	Matrix activate(Matrix inputs);
+	Matrix deriv_activate(Matrix inputs);
 	Matrix softmax_activation(Matrix inputs);
 
 	inline Matrix getOutput() {

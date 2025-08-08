@@ -21,38 +21,42 @@ std::mt19937_64& get_rng();
 double random(const double& min, const double& max); // Random function
 int random_bit(); // Random bit between 0 and 1
 
-Matrix hotOne(const dvector& y, const int& nElements); // Returns the "hot one" matrix of a vector.
 double CELossFunction(const Matrix& y_pred, const Matrix& y_true); // Return the cross-entropy loss.
 
-// Flatten and unflatten functions
-dvector flatten(const std::vector<Matrix>& A);
-Matrix unFlatten(const dvector& A, const int& iFtMap, const int& rows, const int& cols);
-
 // Utility function used in TrainerClassifier.h
-Matrix flattenToMatrix(const std::vector<double>& flat_image, int rows, int cols);
-void readMNIST(const std::string& imageFile, const std::string& labelFile, dmatrix& images, dvector& labels);
-void writeFile(const dvector& accuracies, const dvector& trainLosses, const dvector& testLosses, int nb_epochs, const std::string& filename);
+void writeFile(const d_vector& accuracies, const d_vector& trainLosses, const d_vector& testLosses, int nb_epochs, const std::string& filename);
 
 
-// ===== PRINT FUNCTIONS ===== //
+// ===== PRINT FUNCTIONS =====
+// Multiple print
+template<typename... Args>
+typename std::enable_if<(sizeof...(Args) > 1), void>::type
+inline print(const Args&... args) { (std::cout << ... << args) << std::endl; }
 
-// Print other stuff
-template<typename... Args> inline void print(const Args&... args) { (std::cout << ... << args) << std::endl; }
-
-// Print matrices & vectors
+// Single print
 template<typename T>
-inline void print(const T& container) {
-	if constexpr (std::is_same_v<T, Matrix> || std::is_same_v<T, dvector>) {
-		std::cout << "[";
-		bool first = true;
-		for (auto element : container) {
-			if constexpr (!std::is_same_v<T, Matrix>) std::cout << (!first ? ", " : "") << element;
-			else print(element);
-			first = false;
+typename std::enable_if<!std::is_same<T, Matrix>::value, void>::type
+inline print(const T& arg) { std::cout << arg << std::endl; }
+
+// Matrix print
+inline void print(const Matrix& A) {
+	const size_t rows = A.rows();
+	const size_t cols = A.cols();
+
+	std::ostringstream stream;
+	stream << "[";
+	for (size_t i = 0; i < rows; i++) {
+		stream << "[";
+		for (size_t j = 0; j < cols; j++) {
+			stream << A(i, j);
+			if (j < cols - 1) stream << ", ";
 		}
-		std::cout << "]," << std::endl;
+		stream << "]";
+		if (i < rows - 1) stream << ", " << std::endl;
 	}
-	else print(container, "");
+	stream << "]" << std::endl;
+
+	std::cout << stream.str();
 }
 
 #endif
