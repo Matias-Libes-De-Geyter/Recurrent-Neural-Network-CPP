@@ -1,5 +1,16 @@
 #include "Matrix.h"
 
+Matrix::Matrix(std::initializer_list<std::initializer_list<double>> init) {
+	_rows = init.size();
+	_cols = init.begin()->size();
+
+	_matrix.clear();
+	_matrix.reserve(_rows * _cols);
+
+	for (const auto& row : init)
+		_matrix.insert(_matrix.end(), row.begin(), row.end());
+}
+
 Matrix& Matrix::operator=(std::initializer_list<std::initializer_list<double>> init) {
 	_rows = init.size();
 	_cols = init.begin()->size();
@@ -19,24 +30,21 @@ Matrix Matrix::operator*(const Matrix& B) const {
 	size_t new_cols = B.cols();
 	Matrix C(_rows, new_cols);
 
-	for (int i = 0; i < _rows; i++) {
-		for (int j = 0; j < new_cols; j++) {
-			for (int k = 0; k < _cols; k++) {
+	for (size_t i = 0; i < _rows; i++)
+		for (size_t j = 0; j < new_cols; j++)
+			for (size_t k = 0; k < _cols; k++)
 				C(i, j) += _matrix[i * _cols + k] * B(k, j);
-			}
-		}
-	}
 
 	return C;
 }
 
 
-Matrix Matrix::operator*(double b) const {
+Matrix Matrix::operator*(const double b) const {
 
 	Matrix C(_rows, _cols);
 
-	for (int i = 0; i < _rows; i++)
-		for (int j = 0; j < _cols; j++)
+	for (size_t i = 0; i < _rows; i++)
+		for (size_t j = 0; j < _cols; j++)
 			C(i, j) = _matrix[i * _cols + j] * b;
 
 	return C;
@@ -71,7 +79,6 @@ Matrix& Matrix::operator+=(const Matrix& B) {
 	assert(_rows == B.rows());
 	assert(_cols == B.cols());
 
-	Matrix C(_rows, _cols);
 	for (size_t i = 0; i < _rows; i++)
 		for (size_t j = 0; j < _cols; j++)
 			_matrix[i * _cols + j] += B(i, j);
@@ -94,6 +101,7 @@ Matrix Matrix::operator-(const Matrix& B) const {
 
 
 Matrix Matrix::T() const {
+
 	Matrix C(_cols, _rows);
 	for (size_t i = 0; i < _cols; i++)
 		for (size_t j = 0; j < _rows; j++)
@@ -101,7 +109,7 @@ Matrix Matrix::T() const {
 
 	return C;
 }
-Matrix Matrix::addBias() {
+Matrix Matrix::addBias() const {
 
 	Matrix C(_rows, _cols + 1);
 	for (size_t i = 0; i < _rows; i++) {
@@ -112,7 +120,7 @@ Matrix Matrix::addBias() {
 
 	return C;
 }
-Matrix Matrix::addBias_then_T() {
+Matrix Matrix::addBias_then_T() const {
 
 	Matrix C(_cols + 1, _rows);
 	for (size_t j = 0; j < _rows; j++) {
@@ -123,7 +131,7 @@ Matrix Matrix::addBias_then_T() {
 
 	return C;
 }
-Matrix Matrix::removeBias() {
+Matrix Matrix::removeBias() const {
 
 	Matrix C(_rows - 1, _cols);
 	for (size_t i = 0; i < _rows - 1; i++)

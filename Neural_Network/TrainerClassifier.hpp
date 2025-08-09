@@ -1,21 +1,9 @@
-/*trainer:
-
-
-
-set_scope():
-	mettre le scope
-
-set_data():
-	voilà
-
-run():
-	entrainer*/
-
 #include "ScopeClassifier.hpp"
+#include "Dataset.hpp"
 
 
-#ifndef TRAINER_H
-#define TRAINER_H
+#ifndef TRAINER_HPP
+#define TRAINER_HPP
 
 class TrainerClassifier {
 private:
@@ -25,11 +13,13 @@ private:
 	ScopeClassifier* _scope;
 	std::vector<std::vector<Matrix>>* _xtrain;
 	std::vector<Matrix>* _ytrain;
+	std::vector<std::vector<Matrix>>* _xvalid;
+	std::vector<Matrix>* _yvalid;
 
 public:
 	TrainerClassifier(RNN&, const hyperparameters&);
 	void set_scope(ScopeClassifier&);
-	void set_data(std::vector<std::vector<Matrix>>&, std::vector<Matrix>&);
+	void set_data(Dataset&, Dataset&);
 	void run();
 };
 

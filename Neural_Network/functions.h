@@ -3,8 +3,6 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-#define EULERS_NUMBER pow((1.0 + 1.0 / 10000000.0), 10000000.0)
-
 // Hyperparameters
 struct hyperparameters {
 	int seq_len;
@@ -15,6 +13,7 @@ struct hyperparameters {
 	int max_epochs;
 	int n_batch;
 	int batch_size;
+	int test_size;
 };
 
 std::mt19937_64& get_rng();

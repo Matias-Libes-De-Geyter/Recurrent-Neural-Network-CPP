@@ -1,12 +1,12 @@
 #include "functions.h"
 
-#ifndef RNN_H
-#define RNN_H
+#ifndef RNN_HPP
+#define RNN_HPP
 
 class RNN {
 
 private:
-	hyperparameters _hyper;
+	const hyperparameters& _hyper;
 	Matrix m_inWeights;
 	Matrix m_hiddenWeights;
 	Matrix m_outWeights;
@@ -22,7 +22,7 @@ private:
 	Matrix m_output;
 
 public:
-	RNN(hyperparameters& hyper);
+	RNN(const hyperparameters& hyper);
 
 	void forward(const std::vector<Matrix>& input);
 
@@ -35,7 +35,6 @@ public:
 	inline Matrix getOutput() {
 		return m_output;
 	};
-
 	inline std::vector<std::pair<Matrix*, Matrix*>> getParameters() {
 		return {
 		{ &m_inWeights, &m_dU, },

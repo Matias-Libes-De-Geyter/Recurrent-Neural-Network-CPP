@@ -29,24 +29,30 @@ public:
 
 	// Constructors
 	inline Matrix() {};
-	inline Matrix(size_t row, size_t columns) : _rows(row), _cols(columns), _matrix(d_vector(_rows* _cols, 0.0)) {};
+	Matrix(std::initializer_list<std::initializer_list<double>>);
+	inline Matrix(const double a) : _rows(1), _cols(1), _matrix(d_vector(1, a)) {};
+	inline Matrix(size_t row, size_t columns) : _rows(row), _cols(columns), _matrix(d_vector(_rows * _cols, 0.0)) {};
 
+	// Operators
 	Matrix& operator=(std::initializer_list<std::initializer_list<double>>);
 	Matrix operator*(const Matrix& B) const;
-	Matrix operator*(double b) const;
+	Matrix operator*(const double b) const;
 	Matrix hadamard(const Matrix& B) const;
 
 	Matrix operator+(const Matrix& B) const;
 	Matrix& operator+=(const Matrix& B);
 	Matrix operator-(const Matrix& B) const;
 
+	// Modification
 	Matrix T() const;
-	Matrix addBias();
-	Matrix addBias_then_T();
-	Matrix removeBias();
+	Matrix addBias() const;
+	Matrix addBias_then_T() const;
+	Matrix removeBias() const;
 
+	// Getting data
 	inline double& operator()(size_t i, size_t j) { return _matrix[i * _cols + j]; };
 	inline const double& operator()(size_t i, size_t j) const { return _matrix[i * _cols + j]; };
+	inline Matrix getParams() const { return Matrix{ {static_cast<double>(_rows), static_cast<double>(_cols)} }; };
 };
 
 #endif

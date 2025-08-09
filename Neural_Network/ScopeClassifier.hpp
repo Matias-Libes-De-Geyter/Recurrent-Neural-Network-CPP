@@ -1,11 +1,11 @@
 #include "RNN.hpp"
 
-#ifndef SCOPE_H
-#define SCOPE_H
+#ifndef SCOPE_HPP
+#define SCOPE_HPP
 
 class ScopeClassifier {
 private:
-	const hyperparameters _hyper;
+	const hyperparameters& _hyper;
 
 	std::vector<Matrix> M, V;
 
