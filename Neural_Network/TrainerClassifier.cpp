@@ -42,8 +42,10 @@ void TrainerClassifier::run() {
 			// Loss & accuracy
 			const Matrix& ypred = _model.getOutput();
 			epoch_loss += CELossFunction(ypred, Y);
-			if ((Y(0, 0) < Y(0, 1)) == (ypred(0, 0) < ypred(0, 1)))
-				train_correct++;
+			for (int b = 0; b < _hyper.batch_size; b++)
+				if ((Y(b, 0) < Y(b, 1)) == (ypred(b, 0) < ypred(b, 1)))
+					train_correct++;
+			
 		}
 		epoch_loss /= _hyper.n_batch;
 		double train_accuracy = 100.0 * train_correct / _hyper.n_batch;
@@ -68,6 +70,6 @@ void TrainerClassifier::run() {
 			  "test_acc = ", val_accuracy, " %");
 
 		// Early stopper (very primitive for now. Have to implement it in the ScopeClassifier)
-		if (val_accuracy > 99) break;
+		if (val_accuracy > 99 && train_accuracy > 99) break;
 	}
 }

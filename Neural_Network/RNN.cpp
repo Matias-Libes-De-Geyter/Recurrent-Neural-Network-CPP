@@ -36,7 +36,7 @@ void RNN::forward(const std::vector<Matrix>& input) {
 
 	m_Z.resize(_hyper.seq_len);
 	m_hiddenStates.resize(_hyper.seq_len + 1);
-	m_hiddenStates[0] = Matrix(_hyper.batch_size, _hyper.hidden_dimension);
+	m_hiddenStates[0] = Matrix(input[0].rows(), _hyper.hidden_dimension);
 
 	for (int t = 0; t < _hyper.seq_len; ++t) {
 		// h = a(z) = a(x*U + h*W + b)
@@ -63,8 +63,8 @@ void RNN::backpropagation(const std::vector<Matrix>& input, const Matrix& y_real
 		if(layer < _hyper.seq_len - 1)
 			m_deltas[layer] = (m_deltas[layer + 1] * m_hiddenWeights.removeBias()).hadamard(deriv_activate(m_Z[layer]));
 
-		m_dU += input[layer].addBias_then_T() * m_deltas[layer];
-		m_dW += m_hiddenStates[layer].addBias_then_T() * m_deltas[layer];
+		m_dU += input[layer].addBias_then_T() * m_deltas[layer] * (1.0 / _hyper.batch_size);
+		m_dW += m_hiddenStates[layer].addBias_then_T() * m_deltas[layer] * (1.0 / _hyper.batch_size);
 	}
 }
 
