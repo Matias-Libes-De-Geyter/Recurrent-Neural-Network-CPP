@@ -37,17 +37,21 @@ public:
 	Matrix& operator=(std::initializer_list<std::initializer_list<double>>);
 	Matrix operator*(const Matrix& B) const;
 	Matrix operator*(const double b) const;
+	Matrix& operator*=(const double b);
 	Matrix hadamard(const Matrix& B) const;
 
 	Matrix operator+(const Matrix& B) const;
 	Matrix& operator+=(const Matrix& B);
 	Matrix operator-(const Matrix& B) const;
+	Matrix& operator-=(const Matrix& B);
 
 	// Modification
 	Matrix T() const;
 	Matrix addBias() const;
 	Matrix addBias_then_T() const;
 	Matrix removeBias() const;
+
+	void fill(const double b);
 
 	// Getting data
 	inline double& operator()(size_t i, size_t j) { return _matrix[i * _cols + j]; };

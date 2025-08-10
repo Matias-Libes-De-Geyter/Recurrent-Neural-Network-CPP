@@ -43,9 +43,7 @@ void TrainerClassifier::run() {
 			const Matrix& ypred = _model.getOutput();
 			epoch_loss += CELossFunction(ypred, Y);
 			for (int b = 0; b < _hyper.batch_size; b++)
-				if ((Y(b, 0) < Y(b, 1)) == (ypred(b, 0) < ypred(b, 1)))
-					train_correct++;
-			
+				train_correct += ((Y(b, 0) < Y(b, 1)) == (ypred(b, 0) < ypred(b, 1)));		
 		}
 		epoch_loss /= _hyper.n_batch;
 		double train_accuracy = 100.0 * train_correct / _hyper.n_batch;
@@ -58,8 +56,7 @@ void TrainerClassifier::run() {
 			_model.forward(X);
 			
 			const Matrix& ypred = _model.getOutput();
-			if ((Y(0, 0) < Y(0, 1)) == (ypred(0, 0) < ypred(0, 1)))
-				val_correct++;
+			val_correct += ((Y(0, 0) < Y(0, 1)) == (ypred(0, 0) < ypred(0, 1)));
 		}
 		double val_accuracy = 100.0 * val_correct / _hyper.test_size;
 

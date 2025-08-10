@@ -28,11 +28,11 @@ public:
 
 	void backpropagation(const std::vector<Matrix>& input, const Matrix& y_real);
 
-	Matrix activate(Matrix inputs);
-	Matrix deriv_activate(Matrix inputs);
-	Matrix softmax_activation(Matrix inputs);
+	Matrix activate(Matrix& inputs);
+	Matrix deriv_activate(Matrix& inputs);
+	Matrix softmax_activation(Matrix& inputs);
 
-	inline Matrix getOutput() {
+	inline const Matrix& getOutput() const {
 		return m_output;
 	};
 	inline std::vector<std::pair<Matrix*, Matrix*>> getParameters() {

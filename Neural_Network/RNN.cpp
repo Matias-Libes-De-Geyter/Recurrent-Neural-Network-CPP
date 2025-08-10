@@ -24,18 +24,17 @@ RNN::RNN(const hyperparameters& hyper) : _hyper(hyper), m_inWeights(_hyper.input
 		for (size_t j = 0; j < _hyper.hidden_dimension; j++)
 			m_outWeights(j, i) = random(-limit, limit);
 
-	m_hiddenStates.clear();
 	m_Z.clear();
+	m_Z.resize(_hyper.seq_len);
+	m_hiddenStates.clear();
+	m_hiddenStates.resize(_hyper.seq_len + 1);
 	m_deltas.clear();
-
 	m_deltas.resize(_hyper.seq_len);
 
 }
 
 void RNN::forward(const std::vector<Matrix>& input) {
 
-	m_Z.resize(_hyper.seq_len);
-	m_hiddenStates.resize(_hyper.seq_len + 1);
 	m_hiddenStates[0] = Matrix(input[0].rows(), _hyper.hidden_dimension);
 
 	for (int t = 0; t < _hyper.seq_len; ++t) {
@@ -50,32 +49,37 @@ void RNN::forward(const std::vector<Matrix>& input) {
 
 void RNN::backpropagation(const std::vector<Matrix>& input, const Matrix& y_real) {
 
-	m_dU = Matrix(m_inWeights.rows(), m_inWeights.cols());
-	m_dW = Matrix(m_hiddenWeights.rows(), m_hiddenWeights.cols());
-	m_dWout = Matrix(m_outWeights.rows(), m_outWeights.cols());
+	double norm = 1.0 / _hyper.batch_size;
+
+	m_dU.fill(0.0);
+	m_dW.fill(0.0);
+	m_dWout.fill(0.0);
 
 	Matrix delta_out = m_output - y_real;
 	m_dWout = m_hiddenStates[_hyper.seq_len].T() * delta_out;
 
-	for (int layer = _hyper.seq_len - 1; layer >= 0; layer--) {
-		if(layer == _hyper.seq_len - 1)
+	for (int t = _hyper.seq_len - 1; t >= 0; t--) {
+		if(t == _hyper.seq_len - 1)
 			m_deltas[_hyper.seq_len - 1] = (delta_out * m_outWeights.T()).hadamard(deriv_activate(m_Z[_hyper.seq_len - 1]));
-		if(layer < _hyper.seq_len - 1)
-			m_deltas[layer] = (m_deltas[layer + 1] * m_hiddenWeights.removeBias()).hadamard(deriv_activate(m_Z[layer]));
+		if(t < _hyper.seq_len - 1)
+			m_deltas[t] = (m_deltas[t + 1] * m_hiddenWeights.removeBias().T()).hadamard(deriv_activate(m_Z[t]));
 
-		m_dU += input[layer].addBias_then_T() * m_deltas[layer] * (1.0 / _hyper.batch_size);
-		m_dW += m_hiddenStates[layer].addBias_then_T() * m_deltas[layer] * (1.0 / _hyper.batch_size);
+		m_dU += input[t].addBias_then_T() * m_deltas[t];
+		m_dW += m_hiddenStates[t].addBias_then_T() * m_deltas[t];
 	}
+
+	m_dU *= norm;
+	m_dW *= norm;
 }
 
-Matrix RNN::activate(Matrix inputs) {
+Matrix RNN::activate(Matrix& inputs) {
 
 	for (size_t i = 0; i < inputs.rows(); i++)
 		for (size_t j = 0; j < inputs.cols(); j++)
 			inputs(i, j) = std::tanh(inputs(i, j));
 	return inputs;
 }
-Matrix RNN::deriv_activate(Matrix inputs) {
+Matrix RNN::deriv_activate(Matrix& inputs) {
 
 	for (size_t i = 0; i < inputs.rows(); ++i) {
 		for (size_t j = 0; j < inputs.cols(); ++j) {
@@ -86,7 +90,7 @@ Matrix RNN::deriv_activate(Matrix inputs) {
 	return inputs;
 }
 
-Matrix RNN::softmax_activation(Matrix inputs) {
+Matrix RNN::softmax_activation(Matrix& inputs) {
 
 	d_vector maxs(inputs.rows());
 	for (size_t i = 0; i < inputs.rows(); i++) {

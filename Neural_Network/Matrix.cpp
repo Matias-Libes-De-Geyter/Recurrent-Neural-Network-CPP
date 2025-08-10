@@ -30,10 +30,14 @@ Matrix Matrix::operator*(const Matrix& B) const {
 	size_t new_cols = B.cols();
 	Matrix C(_rows, new_cols);
 
-	for (size_t i = 0; i < _rows; i++)
-		for (size_t j = 0; j < new_cols; j++)
-			for (size_t k = 0; k < _cols; k++)
-				C(i, j) += _matrix[i * _cols + k] * B(k, j);
+	for (size_t i = 0; i < _rows; i++) {
+		size_t row_offset = i * _cols;
+		for (size_t k = 0; k < _cols; k++) {
+			double Aik = _matrix[row_offset + k];
+			for (size_t j = 0; j < new_cols; j++)
+				C(i, j) += Aik * B(k, j);
+		}
+	}
 
 	return C;
 }
@@ -43,11 +47,20 @@ Matrix Matrix::operator*(const double b) const {
 
 	Matrix C(_rows, _cols);
 
-	for (size_t i = 0; i < _rows; i++)
+	for (size_t i = 0; i < _rows; i++) {
+		size_t row_offset = i * _cols;
 		for (size_t j = 0; j < _cols; j++)
-			C(i, j) = _matrix[i * _cols + j] * b;
+			C(i, j) = _matrix[row_offset + j] * b;
+	}
 
 	return C;
+}
+Matrix& Matrix::operator*=(const double b) {
+
+	for (size_t idx = 0; idx < _rows * _cols; idx++)
+		_matrix[idx] *= b;
+
+	return *this;
 }
 
 Matrix Matrix::hadamard(const Matrix& B) const {
@@ -55,9 +68,11 @@ Matrix Matrix::hadamard(const Matrix& B) const {
 	assert(_cols == B.cols());
 
 	Matrix C(_rows, _cols);
-	for (size_t i = 0; i < _rows; i++)
+	for (size_t i = 0; i < _rows; i++) {
+		size_t row_offset = i * _cols;
 		for (size_t j = 0; j < _cols; j++)
-			C(i, j) = _matrix[i * _cols + j] * B(i, j);
+			C(i, j) = _matrix[row_offset + j] * B(i, j);
+	}
 
 	return C;
 }
@@ -68,9 +83,11 @@ Matrix Matrix::operator+(const Matrix& B) const {
 	assert(_cols == B.cols());
 
 	Matrix C(_rows, _cols);
-	for (size_t i = 0; i < _rows; i++)
+	for (size_t i = 0; i < _rows; i++) {
+		size_t row_offset = i * _cols;
 		for (size_t j = 0; j < _cols; j++)
-			C(i, j) = _matrix[i * _cols + j] + B(i, j);
+			C(i, j) = _matrix[row_offset + j] + B(i, j);
+	}
 
 	return C;
 }
@@ -79,9 +96,11 @@ Matrix& Matrix::operator+=(const Matrix& B) {
 	assert(_rows == B.rows());
 	assert(_cols == B.cols());
 
-	for (size_t i = 0; i < _rows; i++)
+	for (size_t i = 0; i < _rows; i++) {
+		size_t row_offset = i * _cols;
 		for (size_t j = 0; j < _cols; j++)
-			_matrix[i * _cols + j] += B(i, j);
+			_matrix[row_offset + j] += B(i, j);
+	}
 
 	return *this;
 }
@@ -91,11 +110,26 @@ Matrix Matrix::operator-(const Matrix& B) const {
 	assert(_cols == B.cols());
 
 	Matrix C(_rows, _cols);
-	for (size_t i = 0; i < _rows; i++)
+	for (size_t i = 0; i < _rows; i++) {
+		size_t row_offset = i * _cols;
 		for (size_t j = 0; j < _cols; j++)
-			C(i, j) = _matrix[i * _cols + j] - B(i, j);
+			C(i, j) = _matrix[row_offset + j] - B(i, j);
+	}
 
 	return C;
+}
+
+Matrix& Matrix::operator-=(const Matrix& B) {
+	assert(_rows == B.rows());
+	assert(_cols == B.cols());
+
+	for (size_t i = 0; i < _rows; i++) {
+		size_t row_offset = i * _cols;
+		for (size_t j = 0; j < _cols; j++)
+			_matrix[row_offset + j] -= B(i, j);
+	}
+
+	return *this;
 }
 
 
@@ -103,9 +137,11 @@ Matrix Matrix::operator-(const Matrix& B) const {
 Matrix Matrix::T() const {
 
 	Matrix C(_cols, _rows);
-	for (size_t i = 0; i < _cols; i++)
-		for (size_t j = 0; j < _rows; j++)
-			C(i, j) = _matrix[j * _cols + i];
+	for (size_t j = 0; j < _rows; j++) {
+		size_t row_offset = j * _cols;
+		for (size_t i = 0; i < _cols; i++)
+			C(i, j) = _matrix[row_offset + i];
+	}
 
 	return C;
 }
@@ -113,8 +149,9 @@ Matrix Matrix::addBias() const {
 
 	Matrix C(_rows, _cols + 1);
 	for (size_t i = 0; i < _rows; i++) {
+		size_t row_offset = i * _cols;
 		for (size_t j = 0; j < _cols; j++)
-			C(i, j) = _matrix[i * _cols + j];
+			C(i, j) = _matrix[row_offset + j];
 		C(i, _cols) = 1;
 	}
 
@@ -124,8 +161,9 @@ Matrix Matrix::addBias_then_T() const {
 
 	Matrix C(_cols + 1, _rows);
 	for (size_t j = 0; j < _rows; j++) {
+		size_t row_offset = j * _cols;
 		for (size_t i = 0; i < _cols; i++)
-			C(i, j) = _matrix[j * _cols + i];
+			C(i, j) = _matrix[row_offset + i];
 		C(_cols, j) = 1;
 	}
 
@@ -134,9 +172,17 @@ Matrix Matrix::addBias_then_T() const {
 Matrix Matrix::removeBias() const {
 
 	Matrix C(_rows - 1, _cols);
-	for (size_t i = 0; i < _rows - 1; i++)
+	for (size_t i = 0; i < _rows - 1; i++) {
+		size_t row_offset = i * _cols;
 		for (size_t j = 0; j < _cols; j++)
-			C(i, j) = _matrix[i * _cols + j];
+			C(i, j) = _matrix[row_offset + j];
+	}
 
 	return C;
+}
+
+void Matrix::fill(const double b) {
+
+	for (size_t idx = 0; idx < _rows * _cols; idx++)
+		_matrix[idx] = b;
 }

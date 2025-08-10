@@ -4,34 +4,36 @@
 #include "Dataset.hpp"
 
 hyperparameters hyper = {
-    seq_len: 5,      // input_number
-    input_dimension : 1,     // time_steps (non utilisé ici, mais conservé)
-    hidden_dimension : 8,     // hidden_dimension
-    output_dimension : 2,      // output_dimension
-    learning_rate : 0.005,   // learning_rate
+    seq_len: 5,
+    input_dimension : 1,
+    hidden_dimension : 8,
+    output_dimension : 2,
+    learning_rate : 0.005,
     max_epochs : 100,
     n_batch : 1000,
-    batch_size : 5,
+    batch_size : 16,
     test_size : 100
 };
 
 /* FONCTIONNENT:
-    seq_len : 5,      // input_number
-    input_dimension : 1,     // time_steps (non utilisé ici, mais conservé)
-    hidden_dimension : 8,     // hidden_dimension
-    output_dimension : 2,      // output_dimension
-    learning_rate : 0.005,   // learning_rate
+    seq_len: 5,
+    input_dimension : 1,
+    hidden_dimension : 8,
+    output_dimension : 2,
+    learning_rate : 0.005,
     max_epochs : 100,
+    batch_size : 16,
     n_batch : 1000,
     batch_size : 1*/
 
 /*
-    seq_len : 3,      // input_number
-    input_dimension : 1,     // time_steps (non utilisé ici, mais conservé)
-    hidden_dimension : 32,     // hidden_dimension
-    output_dimension : 2,      // output_dimension
-    learning_rate : 0.001,   // learning_rate
+    seq_len: 3,
+    input_dimension : 1,
+    hidden_dimension : 32,
+    output_dimension : 2,
+    learning_rate : 0.001,
     max_epochs : 100,
+    batch_size : 1,
     n_batch : 1000,
     batch_size : 1*/
 

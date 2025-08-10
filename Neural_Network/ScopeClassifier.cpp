@@ -25,12 +25,12 @@ void ScopeClassifier::Adam(Matrix& W, Matrix& dW, const int k) {
 		for (size_t j = 0; j < W.cols(); j++) {
 			double M_hat = M[k](i, j) / bias_1_correction;
 			double V_hat = V[k](i, j) / bias_2_correction;
-			W(i, j) = W(i, j) - (M_hat / (sqrt(V_hat) + 1e-8)) * _hyper.learning_rate;
+			W(i, j) -= (M_hat / (sqrt(V_hat) + 1e-8)) * _hyper.learning_rate;
 		}
 	}
 }
 
 void ScopeClassifier::SGD(Matrix& W, Matrix& dW) {
 
-	W = W - dW * _hyper.learning_rate;
+	W -= dW * _hyper.learning_rate;
 }

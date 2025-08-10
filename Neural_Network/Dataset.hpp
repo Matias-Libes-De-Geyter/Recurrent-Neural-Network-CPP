@@ -36,7 +36,7 @@ inline Dataset DataLoader(const hyperparameters& hyper, const std::string& datas
 		std::vector<Matrix> x_batch;
 		x_batch.reserve(hyper.seq_len);
 
-		std::vector<int> sum(batch_size);
+		std::vector<int> sum(batch_size, 0);
 
 		for (int i = 0; i < hyper.seq_len; i++) {
 			Matrix X(batch_size, hyper.input_dimension);
