@@ -1,0 +1,11 @@
+all: compile link
+
+CXXFLAGS = -Ilibs/include
+
+SOURCES = $(wildcard Neural_Network/*.cpp)
+
+compile:
+	g++ $(CXXFLAGS) -c $(SOURCES)
+
+link:
+	g++ *.o -o main -Llibs/lib
