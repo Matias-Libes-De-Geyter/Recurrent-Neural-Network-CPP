@@ -28,8 +28,8 @@ public:
 
 	void backpropagation(const std::vector<Matrix>& input, const std::vector<Matrix>& y_real);
 
-	Matrix activate(Matrix& inputs);
-	Matrix deriv_activate(Matrix& inputs);
+	Matrix tanh_activation(Matrix& inputs);
+	Matrix deriv_tanh(Matrix& inputs);
 	Matrix sigmoid_activation(Matrix& inputs);
 	Matrix softmax_activation(Matrix& inputs);
 

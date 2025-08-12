@@ -3,8 +3,9 @@
 #include "ScopeClassifier.hpp"
 #include "Dataset.hpp"
 
+// s, h = 5,16 // 30,16 // 50,8
 hyperparameters hyper = {
-    seq_len: 5,
+    seq_len: 30,
     input_dimension : 1,
     hidden_dimension : 16,
     output_dimension : 1,

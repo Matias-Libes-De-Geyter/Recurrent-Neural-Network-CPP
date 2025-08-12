@@ -4,9 +4,9 @@
 #include "Dataset.hpp"
 
 hyperparameters hyper = {
-    seq_len: 5,
+    seq_len: 15,
     input_dimension : 1,
-    hidden_dimension : 8,
+    hidden_dimension : 32,
     output_dimension : 2,
     learning_rate : 0.005,
     max_epochs : 100,

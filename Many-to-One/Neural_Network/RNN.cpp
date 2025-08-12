@@ -73,20 +73,22 @@ void RNN::backpropagation(const std::vector<Matrix>& input, const Matrix& y_real
 
 Matrix RNN::activate(Matrix& inputs) {
 
+	Matrix output(inputs.rows(), inputs.cols());
 	for (size_t i = 0; i < inputs.rows(); i++)
 		for (size_t j = 0; j < inputs.cols(); j++)
-			inputs(i, j) = std::tanh(inputs(i, j));
-	return inputs;
+			output(i, j) = std::tanh(inputs(i, j));
+	return output;
 }
 Matrix RNN::deriv_activate(Matrix& inputs) {
 
+	Matrix output(inputs.rows(), inputs.cols());
 	for (size_t i = 0; i < inputs.rows(); ++i) {
 		for (size_t j = 0; j < inputs.cols(); ++j) {
 			double v = std::tanh(inputs(i, j));
-			inputs(i, j) = 1 - v * v;
+			output(i, j) = 1 - v * v;
 		}
 	}
-	return inputs;
+	return output;
 }
 
 Matrix RNN::softmax_activation(Matrix& inputs) {
@@ -108,9 +110,10 @@ Matrix RNN::softmax_activation(Matrix& inputs) {
 		}
 	}
 
+	Matrix output(inputs.rows(), inputs.cols());
 	for (size_t i = 0; i < inputs.rows(); i++)
 		for (size_t j = 0; j < inputs.cols(); j++)
-			inputs(i, j) = expvalues(i, j) / sum_of_exps[i];
+			output(i, j) = expvalues(i, j) / sum_of_exps[i];
 
-	return inputs;
+	return output;
 }

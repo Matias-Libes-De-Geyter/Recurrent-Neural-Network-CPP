@@ -44,7 +44,7 @@ void RNN::forward(const std::vector<Matrix>& input) {
 
 	for (int t = 0; t < _hyper.seq_len; ++t) {
 		m_Z[t] = input[t].addBias() * m_inWeights + m_hiddenStates[t].addBias() * m_hiddenWeights;
-		m_hiddenStates[t + 1] = activate(m_Z[t]);
+		m_hiddenStates[t + 1] = tanh_activation(m_Z[t]);
 		Matrix y = m_hiddenStates[t + 1] * m_outWeights;
 		m_Y[t] = sigmoid_activation(y);
 	}
@@ -62,7 +62,7 @@ void RNN::backpropagation(const std::vector<Matrix>& input, const std::vector<Ma
 		Matrix dH = m_y_deltas[t] * m_outWeights.T();
 		if (t < _hyper.seq_len - 1)
 			dH += m_z_deltas[t + 1] * m_hiddenWeights.removeBias().T();
-		m_z_deltas[t] = dH.hadamard(deriv_activate(m_Z[t]));
+		m_z_deltas[t] = dH.hadamard(deriv_tanh(m_Z[t]));
 
 		m_dU += input[t].addBias_then_T() * m_z_deltas[t];
 		m_dW += m_hiddenStates[t].addBias_then_T() * m_z_deltas[t];
@@ -75,30 +75,33 @@ void RNN::backpropagation(const std::vector<Matrix>& input, const std::vector<Ma
 	m_dWout *= norm;
 }
 
-Matrix RNN::activate(Matrix& inputs) {
+Matrix RNN::tanh_activation(Matrix& inputs) {
 
+	Matrix output(inputs.rows(), inputs.cols());
 	for (size_t i = 0; i < inputs.rows(); i++)
 		for (size_t j = 0; j < inputs.cols(); j++)
-			inputs(i, j) = std::tanh(inputs(i, j));
-	return inputs;
+			output(i, j) = std::tanh(inputs(i, j));
+	return output;
 }
-Matrix RNN::deriv_activate(Matrix& inputs) {
+Matrix RNN::deriv_tanh(Matrix& inputs) {
 
+	Matrix output(inputs.rows(), inputs.cols());
 	for (size_t i = 0; i < inputs.rows(); ++i) {
 		for (size_t j = 0; j < inputs.cols(); ++j) {
 			double v = std::tanh(inputs(i, j));
-			inputs(i, j) = 1 - v * v;
+			output(i, j) = 1 - v * v;
 		}
 	}
-	return inputs;
+	return output;
 }
 
 Matrix RNN::sigmoid_activation(Matrix& inputs) {
 
+	Matrix output(inputs.rows(), inputs.cols());
 	for (size_t i = 0; i < inputs.rows(); ++i)
 		for (size_t j = 0; j < inputs.cols(); ++j)
-			inputs(i, j) = 1.0 / (1.0 + std::exp(-inputs(i, j)));
-	return inputs;
+			output(i, j) = 1.0 / (1.0 + std::exp(-inputs(i, j)));
+	return output;
 }
 Matrix RNN::softmax_activation(Matrix& inputs) {
 
@@ -119,9 +122,10 @@ Matrix RNN::softmax_activation(Matrix& inputs) {
 		}
 	}
 
+	Matrix output(inputs.rows(), inputs.cols());
 	for (size_t i = 0; i < inputs.rows(); i++)
 		for (size_t j = 0; j < inputs.cols(); j++)
-			inputs(i, j) = expvalues(i, j) / sum_of_exps[i];
+			output(i, j) = expvalues(i, j) / sum_of_exps[i];
 
-	return inputs;
+	return output;
 }
