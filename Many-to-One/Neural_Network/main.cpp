@@ -1,7 +1,7 @@
-﻿#include "RNN.hpp"
-#include "TrainerClassifier.hpp"
-#include "ScopeClassifier.hpp"
-#include "Dataset.hpp"
+﻿#include "RNN/RNN.hpp"
+#include "Classifier/TrainerClassifier.hpp"
+#include "Classifier/Scope.hpp"
+#include "Dataset/Dataset.hpp"
 
 hyperparameters hyper = {
     seq_len: 15,
@@ -40,7 +40,7 @@ hyperparameters hyper = {
 int main() {
     RNN model(hyper);
 
-    ScopeClassifier scope(model, hyper);
+    Scope scope(model, hyper);
     
     TrainerClassifier trainer(model, hyper);
 

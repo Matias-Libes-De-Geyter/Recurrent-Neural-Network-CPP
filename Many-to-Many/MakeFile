@@ -1,11 +1,15 @@
 all: compile link
 
-CXXFLAGS = -Ilibs/include
+CXXFLAGS = -INeural_Network/RNN -INeural_Network/Classifier -INeural_Network/Dataset -INeural_Network/Utilities
 
-SOURCES = $(wildcard Neural_Network/*.cpp)
+SOURCES = $(wildcard Neural_Network/*.cpp) \
+          $(wildcard Neural_Network/RNN/*.cpp) \
+          $(wildcard Neural_Network/Classifier/*.cpp) \
+          $(wildcard Neural_Network/Dataset/*.cpp) \
+          $(wildcard Neural_Network/Utilities/*.cpp)
 
 compile:
 	g++ $(CXXFLAGS) -c $(SOURCES)
 
 link:
-	g++ *.o -o main -Llibs/lib
+	g++ *.o -o main
