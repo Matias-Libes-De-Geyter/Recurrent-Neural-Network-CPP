@@ -22,8 +22,159 @@ int random_bit(); // Random bit between 0 and 1
 
 double CELossFunction(const Matrix& y_pred, const Matrix& y_true); // Return the cross-entropy loss.
 
-// Utility function used in TrainerClassifier.h
-void writeFile(const d_vector& accuracies, const d_vector& trainLosses, const d_vector& testLosses, int nb_epochs, const std::string& filename);
+// Utility function used in TrainerClassifier.hpp
+void writeFile(const std::vector<double>& train_acc, const std::vector<double>& test_acc, const std::vector<double>& loss, int nb_epochs, const std::string& filename);
+
+
+
+namespace ACTIVATION {
+
+	inline Matrix tanh_activation(Matrix& inputs) {
+
+		Matrix output(inputs.rows(), inputs.cols());
+		for (size_t i = 0; i < inputs.rows(); i++)
+			for (size_t j = 0; j < inputs.cols(); j++)
+				output(i, j) = std::tanh(inputs(i, j));
+		return output;
+	};
+	inline Matrix deriv_tanh(Matrix& inputs) {
+
+		Matrix output(inputs.rows(), inputs.cols());
+		for (size_t i = 0; i < inputs.rows(); ++i) {
+			for (size_t j = 0; j < inputs.cols(); ++j) {
+				double v = std::tanh(inputs(i, j));
+				output(i, j) = 1 - v * v;
+			}
+		}
+		return output;
+	};
+
+	inline Matrix ReLU_activation(const Matrix& inputs) {
+
+		Matrix output(inputs.rows(), inputs.cols());
+		for (size_t i = 0; i < inputs.rows(); i++)
+			for (size_t j = 0; j < inputs.cols(); j++)
+				output(i, j) = std::max(0.0, inputs(i, j));
+		return output;
+	};
+	inline Matrix deriv_ReLU(const Matrix& inputs) {
+
+		Matrix output(inputs.rows(), inputs.cols());
+		for (size_t i = 0; i < inputs.rows(); i++)
+			for (size_t j = 0; j < inputs.cols(); j++)
+				output(i, j) = (inputs(i, j) > 0.0 ? 1.0 : 0);
+
+		return output;
+	};
+
+	// Output activation
+	inline Matrix sigmoid_activation(Matrix& inputs) {
+
+		Matrix output(inputs.rows(), inputs.cols());
+		for (size_t i = 0; i < inputs.rows(); ++i)
+			for (size_t j = 0; j < inputs.cols(); ++j)
+				output(i, j) = 1.0 / (1.0 + std::exp(-inputs(i, j)));
+		return output;
+	};
+	inline Matrix softmax_activation(const Matrix& inputs) {
+
+		d_vector maxs(inputs.rows());
+		for (size_t i = 0; i < inputs.rows(); i++) {
+			maxs[i] = inputs(i, 0);
+			for (size_t j = 0; j < inputs.cols(); j++)
+				if (inputs(i, j) > maxs[i])
+					maxs[i] = inputs(i, j);
+		}
+
+		Matrix expvalues = inputs;
+		d_vector sum_of_exps(inputs.rows(), 0);
+		for (size_t i = 0; i < inputs.rows(); i++) {
+			for (size_t j = 0; j < inputs.cols(); j++) {
+				expvalues(i, j) = std::exp(inputs(i, j) - maxs[i]);
+				sum_of_exps[i] += expvalues(i, j);
+			}
+		}
+
+		Matrix output(inputs.rows(), inputs.cols());
+		for (size_t i = 0; i < inputs.rows(); i++)
+			for (size_t j = 0; j < inputs.cols(); j++)
+				output(i, j) = expvalues(i, j) / sum_of_exps[i];
+
+		return output;
+	};
+}
+
+
+namespace MATRIX_OPERATION {
+
+	// output = input.addBias * weights
+	inline Matrix addbiases_then_mult(const Matrix& input, const Matrix& weights) {
+
+		size_t output_rows = input.rows();
+		size_t output_cols = weights.cols();
+		size_t middle_dim = input.cols() + 1;
+
+		assert(middle_dim == weights.rows());
+
+		Matrix output(output_rows, output_cols);
+
+		for (size_t i = 0; i < output_rows; i++) {
+			for (size_t k = 0; k < middle_dim; k++) {
+				double input_ik = (k == input.cols() ? 1 : input(i, k));
+				for (size_t j = 0; j < output_cols; j++)
+					output(i, j) += input_ik * weights(k, j);
+			}
+		}
+
+		return output;
+	};
+
+	// Compute weights. Role: one function for both:
+	// weights += input.addBiasThenT * delta
+	inline void compute_weigths(Matrix& weights, const Matrix& input, const Matrix& delta) {
+
+		size_t output_rows = weights.rows();
+		size_t output_cols = weights.cols();
+		size_t middle_dim = input.rows();
+
+		assert(middle_dim == delta.rows());
+		assert(output_rows == input.cols() + 1);
+		assert(output_cols == delta.cols());
+
+		for (size_t i = 0; i < output_rows - 1; i++) {
+			for (size_t k = 0; k < middle_dim; k++) {
+				double input_ik = input(k, i);
+				for (size_t j = 0; j < output_cols; j++)
+					weights(i, j) += input_ik * delta(k, j);
+			}
+		}
+		for (size_t j = 0; j < output_cols; j++)
+			for (size_t k = 0; k < middle_dim; k++)
+				weights(output_rows - 1, j) += delta(k, j);
+
+	};
+
+	// weights += input.T * delta
+	inline void compute_out_weights(Matrix& weights, const Matrix& input, const Matrix& delta) {
+
+		size_t output_rows = weights.rows();
+		size_t output_cols = weights.cols();
+		size_t middle_dim = input.rows();
+
+		assert(middle_dim == delta.rows());
+		assert(output_rows == input.cols());
+		assert(output_cols == delta.cols());
+
+		for (size_t i = 0; i < output_rows; i++) {
+			for (size_t k = 0; k < middle_dim; k++) {
+				double input_ik = input(k, i);
+				for (size_t j = 0; j < output_cols; j++)
+					weights(i, j) += input_ik * delta(k, j);
+			}
+		}
+	};
+
+}
 
 
 // ===== PRINT FUNCTIONS =====

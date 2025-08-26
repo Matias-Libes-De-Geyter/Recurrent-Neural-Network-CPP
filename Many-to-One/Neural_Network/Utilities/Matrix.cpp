@@ -24,6 +24,19 @@ Matrix& Matrix::operator=(std::initializer_list<std::initializer_list<double>> i
 	return *this;
 }
 
+const bool Matrix::operator==(const Matrix& B) const {
+	if (_rows == B.rows()) {
+		if (_cols == B.cols()) {
+			for (size_t idx = 0; idx < _rows * _cols; idx++)
+				if (B(idx) != _matrix[idx])
+					return false;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 Matrix Matrix::operator*(const Matrix& B) const {
 	assert(_cols == B.rows());
 

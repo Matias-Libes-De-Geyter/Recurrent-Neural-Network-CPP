@@ -16,25 +16,23 @@ private:
 	Matrix m_dWout;
 	
 	std::vector<Matrix> m_Z;
+	std::vector<Matrix> m_dZ;
 	std::vector<Matrix> m_hiddenStates;
-	std::vector<Matrix> m_deltas;
 
 	Matrix m_output;
 
 public:
 	RNN(const hyperparameters& hyper);
 
+	// Forward and Backprop
 	void forward(const std::vector<Matrix>& input);
-
 	void backpropagation(const std::vector<Matrix>& input, const Matrix& y_real);
 
-	Matrix activate(Matrix& inputs);
-	Matrix deriv_activate(Matrix& inputs);
-	Matrix softmax_activation(Matrix& inputs);
-
+	// Return the output vector
 	inline const Matrix& getOutput() const {
 		return m_output;
 	};
+	// Return all the diff parameters and their gradient for later-on optimization (in Scope)
 	inline std::vector<std::pair<Matrix*, Matrix*>> getParameters() {
 		return {
 		{ &m_inWeights, &m_dU, },

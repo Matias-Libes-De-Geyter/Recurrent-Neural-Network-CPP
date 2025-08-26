@@ -4,9 +4,9 @@
 #include "Dataset/Dataset.hpp"
 
 hyperparameters hyper = {
-    seq_len: 15,
+    seq_len: 5,
     input_dimension : 1,
-    hidden_dimension : 32,
+    hidden_dimension : 16,
     output_dimension : 2,
     learning_rate : 0.005,
     max_epochs : 100,
@@ -37,11 +37,14 @@ hyperparameters hyper = {
     n_batch : 1000,
     batch_size : 1*/
 
+const bool store = true;
+
 int main() {
+
     RNN model(hyper);
 
     Scope scope(model, hyper);
-    
+
     TrainerClassifier trainer(model, hyper);
 
     Dataset train = DataLoader(hyper, "train");
@@ -51,7 +54,7 @@ int main() {
     trainer.set_data(train, validation);
     print("Data has been successfully imported");
 
-    trainer.run();
+    trainer.run(store);
 
     return 0;
 }

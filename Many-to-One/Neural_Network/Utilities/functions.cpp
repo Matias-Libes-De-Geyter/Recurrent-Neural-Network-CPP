@@ -31,16 +31,16 @@ double CELossFunction(const Matrix& y_pred, const Matrix& y_true) {
 
 
 // Write output data to plot with python
-void writeFile(const d_vector& accuracies, const d_vector& trainLosses, const d_vector& testLosses, int nb_epochs, const std::string& filename) {
+void writeFile(const d_vector& train_acc, const d_vector& val_acc, const d_vector& loss, int nb_epochs, const std::string& filename) {
 	std::ofstream outFile(filename);
 	if (!outFile) {
 		std::cerr << "Error opening file for writing: " << filename << std::endl;
 		return;
 	}
 
-	outFile << "Epoch,Accuracy,TrainLoss,TestLoss\n";
+	outFile << "Epoch,TrainAcc,ValAcc,Loss\n";
 	for (int epoch = 0; epoch < nb_epochs; ++epoch) {
-		outFile << epoch + 1 << "," << accuracies[epoch] << "," << trainLosses[epoch] << "," << testLosses[epoch] << "\n";
+		outFile << epoch + 1 << "," << train_acc[epoch] << "," << val_acc[epoch] << "," << loss[epoch] << "\n";
 	}
 
 	outFile.close();

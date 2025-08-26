@@ -9,6 +9,7 @@ RNN::RNN(const hyperparameters& hyper) : _hyper(hyper), m_inWeights(_hyper.input
 	m_dW = m_hiddenWeights;
 	m_dWout = m_outWeights;
 
+	// Arbitrary number. Else I would have to change the limit for each weight.
 	double limit = 0.6;
 
 	// inW and outW are initialised as already transposed, for better performance
@@ -26,106 +27,56 @@ RNN::RNN(const hyperparameters& hyper) : _hyper(hyper), m_inWeights(_hyper.input
 	
 	m_Z.clear();
 	m_Z.resize(_hyper.seq_len);
+	m_dZ.clear();
+	m_dZ.resize(_hyper.seq_len);
+
 	m_hiddenStates.clear();
 	m_hiddenStates.resize(_hyper.seq_len + 1);
+
 	m_Y.clear();
 	m_Y.resize(_hyper.seq_len);
-
-	m_z_deltas.clear();
-	m_z_deltas.resize(_hyper.seq_len);
-	m_y_deltas.clear();
-	m_y_deltas.resize(_hyper.seq_len);
+	m_dY.clear();
+	m_dY.resize(_hyper.seq_len);
 
 }
 
+// Forward method
 void RNN::forward(const std::vector<Matrix>& input) {
 
 	m_hiddenStates[0] = Matrix(input[0].rows(), _hyper.hidden_dimension);
 
+	// For each time step, Ht+1 = tanh(X*U + Ht*W) = tanh(Zt) && Yt = a(Ht+1 * Wout) 
 	for (int t = 0; t < _hyper.seq_len; ++t) {
-		m_Z[t] = input[t].addBias() * m_inWeights + m_hiddenStates[t].addBias() * m_hiddenWeights;
-		m_hiddenStates[t + 1] = tanh_activation(m_Z[t]);
-		Matrix y = m_hiddenStates[t + 1] * m_outWeights;
-		m_Y[t] = sigmoid_activation(y);
+		m_Z[t] = MATRIX_OPERATION::addbiases_then_mult(input[t], m_inWeights) + MATRIX_OPERATION::addbiases_then_mult(m_hiddenStates[t], m_hiddenWeights);
+		m_hiddenStates[t + 1] = ACTIVATION::tanh_activation(m_Z[t]);
+
+		m_Y[t] = ACTIVATION::sigmoid_activation(m_hiddenStates[t + 1] * m_outWeights);
 	}
 }
 
+// Backpropagation method. No optimization, just updating the gradients.
 void RNN::backpropagation(const std::vector<Matrix>& input, const std::vector<Matrix>& y_real) {
 
-	m_dU.fill(0.0);
-	m_dW.fill(0.0);
-	m_dWout.fill(0.0);
+	m_dU.fill(0);
+	m_dW.fill(0);
+	m_dWout.fill(0);
 
 	for (int t = _hyper.seq_len - 1; t >= 0; t--) {
-		m_y_deltas[t] = (m_Y[t] - y_real[t]);
+		m_dY[t] = (m_Y[t] - y_real[t]);
 
-		Matrix dH = m_y_deltas[t] * m_outWeights.T();
+		Matrix dH = m_dY[t] * m_outWeights.T();
 		if (t < _hyper.seq_len - 1)
-			dH += m_z_deltas[t + 1] * m_hiddenWeights.removeBias().T();
-		m_z_deltas[t] = dH.hadamard(deriv_tanh(m_Z[t]));
+			dH += m_dZ[t + 1] * m_hiddenWeights.removeBias().T();
+		m_dZ[t] = dH.hadamard(ACTIVATION::deriv_tanh(m_Z[t]));
 
-		m_dU += input[t].addBias_then_T() * m_z_deltas[t];
-		m_dW += m_hiddenStates[t].addBias_then_T() * m_z_deltas[t];
-		m_dWout += m_hiddenStates[t + 1].T() * m_y_deltas[t];
+		MATRIX_OPERATION::compute_weigths(m_dU, input[t], m_dZ[t]);
+		MATRIX_OPERATION::compute_weigths(m_dW, m_hiddenStates[t], m_dZ[t]);
+		MATRIX_OPERATION::compute_out_weights(m_dWout, m_hiddenStates[t + 1], m_dY[t]);
 	}
 
+	// Normalizing the gradients
 	double norm = 1.0 / (_hyper.batch_size * _hyper.seq_len);
 	m_dU *= norm;
 	m_dW *= norm;
 	m_dWout *= norm;
-}
-
-Matrix RNN::tanh_activation(Matrix& inputs) {
-
-	Matrix output(inputs.rows(), inputs.cols());
-	for (size_t i = 0; i < inputs.rows(); i++)
-		for (size_t j = 0; j < inputs.cols(); j++)
-			output(i, j) = std::tanh(inputs(i, j));
-	return output;
-}
-Matrix RNN::deriv_tanh(Matrix& inputs) {
-
-	Matrix output(inputs.rows(), inputs.cols());
-	for (size_t i = 0; i < inputs.rows(); ++i) {
-		for (size_t j = 0; j < inputs.cols(); ++j) {
-			double v = std::tanh(inputs(i, j));
-			output(i, j) = 1 - v * v;
-		}
-	}
-	return output;
-}
-
-Matrix RNN::sigmoid_activation(Matrix& inputs) {
-
-	Matrix output(inputs.rows(), inputs.cols());
-	for (size_t i = 0; i < inputs.rows(); ++i)
-		for (size_t j = 0; j < inputs.cols(); ++j)
-			output(i, j) = 1.0 / (1.0 + std::exp(-inputs(i, j)));
-	return output;
-}
-Matrix RNN::softmax_activation(Matrix& inputs) {
-
-	d_vector maxs(inputs.rows());
-	for (size_t i = 0; i < inputs.rows(); i++) {
-		maxs[i] = inputs(i, 0);
-		for (size_t j = 0; j < inputs.cols(); j++)
-			if (inputs(i, j) > maxs[i])
-				maxs[i] = inputs(i, j);
-	}
-
-	Matrix expvalues = inputs;
-	d_vector sum_of_exps(inputs.rows(), 0);
-	for (size_t i = 0; i < inputs.rows(); i++) {
-		for (size_t j = 0; j < inputs.cols(); j++) {
-			expvalues(i, j) = std::exp(inputs(i, j) - maxs[i]);
-			sum_of_exps[i] += expvalues(i, j);
-		}
-	}
-
-	Matrix output(inputs.rows(), inputs.cols());
-	for (size_t i = 0; i < inputs.rows(); i++)
-		for (size_t j = 0; j < inputs.cols(); j++)
-			output(i, j) = expvalues(i, j) / sum_of_exps[i];
-
-	return output;
 }

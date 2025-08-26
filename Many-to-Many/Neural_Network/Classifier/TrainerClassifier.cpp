@@ -20,16 +20,24 @@ void TrainerClassifier::set_data(Dataset& train, Dataset& validation) {
 	_yvalid = &validation.y;
 }
 
-void TrainerClassifier::run() {
+void TrainerClassifier::run(const bool store) {
+
+	// Store data init
+	d_vector CELoss;
+	d_vector train_acc_array;
+	d_vector val_acc_array;
+
+	// Early stopping
+	int nb_epochs = _hyper.max_epochs;
 
 	const int n_batches = _hyper.n_batch / _hyper.batch_size;
-	for (int epoch = 0; epoch < _hyper.max_epochs; epoch++) {
+	for (int epoch = 0; epoch < nb_epochs; epoch++) {
 
 		double epoch_loss = 0;
 		int train_correct = 0;
 		int val_correct = 0;
 
-		// Test accuracy
+		// Train accuracy
 		for (int n = 0; n < n_batches; n++) {
 			const std::vector<Matrix>& X = (*_xtrain)[n];
 			const std::vector<Matrix>& Y = (*_ytrain)[n];
@@ -43,8 +51,9 @@ void TrainerClassifier::run() {
 			const std::vector<Matrix>& y_pred = _model.getOutput();
 			epoch_loss += sequence_loss(_model.getOutput(), Y);
 			for (int i = 0; i < _hyper.seq_len; i++)
-				if(y_pred[i].getBinary() == Y[i])
-					train_correct++;
+				for(int j = 0; j < _hyper.batch_size; j++)
+					if (y_pred[i].getBinary()(j, 0) == Y[i](j, 0))
+						train_correct++;
 		}
 
 		// Validation accuracy
@@ -63,7 +72,7 @@ void TrainerClassifier::run() {
 
 
 		epoch_loss /= _hyper.n_batch;
-		double train_accuracy = 100.0 * train_correct / n_batches / _hyper.seq_len;
+		double train_accuracy = 100.0 * train_correct / _hyper.n_batch / _hyper.seq_len;
 		double val_accuracy = 100.0 * val_correct / _hyper.test_size / _hyper.seq_len;
 
 		// Printing the results
@@ -72,7 +81,23 @@ void TrainerClassifier::run() {
 			"train_acc = ", train_accuracy, " % | ",
 			"test_acc = ", val_accuracy, " %");
 
-		// Early stopper (very primitive for now. Have to implement it in the Scope)
-		if (val_accuracy > 99 && train_accuracy > 99) break;
+
+		// Storing data
+		if (store) {
+			// Accuracy
+			train_acc_array.push_back(train_accuracy);
+			val_acc_array.push_back(val_accuracy);
+
+			// Loss
+			CELoss.push_back(epoch_loss);
+		}
+
+		// Early stopper (very primitive for now. Might have to implement it in the Scope for better readability)
+		if (val_accuracy > 99 && train_accuracy > 99) {
+			nb_epochs = epoch;
+			break;
+		}
 	}
+	if (store)
+		writeFile(train_acc_array, val_acc_array, CELoss, nb_epochs, "training_data.csv");
 }

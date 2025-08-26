@@ -31,13 +31,14 @@ public:
 	inline Matrix() {};
 	Matrix(std::initializer_list<std::initializer_list<double>>);
 	inline Matrix(const double a) : _rows(1), _cols(1), _matrix(d_vector(1, a)) {};
-	inline Matrix(size_t row, size_t columns) : _rows(row), _cols(columns), _matrix(d_vector(_rows * _cols, 0.0)) {};
+	inline Matrix(size_t row, size_t columns) : _rows(row), _cols(columns), _matrix(d_vector(_rows* _cols, 0.0)) {};
 
 	// Operators
 	Matrix& operator=(std::initializer_list<std::initializer_list<double>>);
+	const bool operator==(const Matrix& B) const;
 	Matrix operator*(const Matrix& B) const;
 	Matrix operator*(const double b) const;
-	Matrix& operator*=(const double b);
+	Matrix& operator*=(const double B);
 	Matrix hadamard(const Matrix& B) const;
 
 	Matrix operator+(const Matrix& B) const;
@@ -54,6 +55,8 @@ public:
 	void fill(const double b);
 
 	// Getting data
+	inline double& operator()(size_t idx) { return _matrix[idx]; };
+	inline const double& operator()(size_t idx) const { return _matrix[idx]; };
 	inline double& operator()(size_t i, size_t j) { return _matrix[i * _cols + j]; };
 	inline const double& operator()(size_t i, size_t j) const { return _matrix[i * _cols + j]; };
 	inline Matrix getParams() const { return Matrix{ {static_cast<double>(_rows), static_cast<double>(_cols)} }; };

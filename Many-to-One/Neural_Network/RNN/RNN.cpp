@@ -9,6 +9,7 @@ RNN::RNN(const hyperparameters& hyper) : _hyper(hyper), m_inWeights(_hyper.input
 	m_dW = m_hiddenWeights;
 	m_dWout = m_outWeights;
 
+	// Arbitrary number. Else I would have to change the limit for each weight.
 	double limit = 0.6;
 
 	// inW and outW are initialised as already transposed, for better performance
@@ -28,25 +29,28 @@ RNN::RNN(const hyperparameters& hyper) : _hyper(hyper), m_inWeights(_hyper.input
 	m_Z.resize(_hyper.seq_len);
 	m_hiddenStates.clear();
 	m_hiddenStates.resize(_hyper.seq_len + 1);
-	m_deltas.clear();
-	m_deltas.resize(_hyper.seq_len);
+	m_dZ.clear();
+	m_dZ.resize(_hyper.seq_len);
 
 }
 
+// Forward method
 void RNN::forward(const std::vector<Matrix>& input) {
 
 	m_hiddenStates[0] = Matrix(input[0].rows(), _hyper.hidden_dimension);
 
+	// For each time step, Ht+1 = tanh(X*U + Ht*W) = tanh(Zt)
 	for (int t = 0; t < _hyper.seq_len; ++t) {
-		// h = a(z) = a(x*U + h*W + b)
-		m_Z[t] = input[t].addBias() * m_inWeights + m_hiddenStates[t].addBias() * m_hiddenWeights;
-		m_hiddenStates[t + 1] = activate(m_Z[t]);
+		m_Z[t] = MATRIX_OPERATION::addbiases_then_mult(input[t], m_inWeights) + MATRIX_OPERATION::addbiases_then_mult(m_hiddenStates[t], m_hiddenWeights);
+		m_hiddenStates[t + 1] = ACTIVATION::tanh_activation(m_Z[t]);
 	}
 
+	// Outputting Y = a(Hlast * Wout) 
 	m_output = m_hiddenStates.back() * m_outWeights;
-	m_output = softmax_activation(m_output);
+	m_output = ACTIVATION::softmax_activation(m_output);
 }
 
+// Backpropagation method. No optimization, just updating the gradients.
 void RNN::backpropagation(const std::vector<Matrix>& input, const Matrix& y_real) {
 
 	m_dU.fill(0.0);
@@ -54,66 +58,20 @@ void RNN::backpropagation(const std::vector<Matrix>& input, const Matrix& y_real
 	m_dWout.fill(0.0);
 
 	Matrix delta_out = m_output - y_real;
-	m_dWout = m_hiddenStates[_hyper.seq_len].T() * delta_out;
-
+	MATRIX_OPERATION::compute_out_weights(m_dWout, m_hiddenStates[_hyper.seq_len], delta_out);
+	
 	for (int t = _hyper.seq_len - 1; t >= 0; t--) {
-		if(t == _hyper.seq_len - 1)
-			m_deltas[_hyper.seq_len - 1] = (delta_out * m_outWeights.T()).hadamard(deriv_activate(m_Z[_hyper.seq_len - 1]));
+		Matrix dH = delta_out * m_outWeights.T();
 		if(t < _hyper.seq_len - 1)
-			m_deltas[t] = (m_deltas[t + 1] * m_hiddenWeights.removeBias().T()).hadamard(deriv_activate(m_Z[t]));
+			dH = m_dZ[t + 1] * m_hiddenWeights.removeBias().T();
+		m_dZ[t] = dH.hadamard(ACTIVATION::deriv_tanh(m_Z[t]));
 
-		m_dU += input[t].addBias_then_T() * m_deltas[t];
-		m_dW += m_hiddenStates[t].addBias_then_T() * m_deltas[t];
+		MATRIX_OPERATION::compute_weigths(m_dU, input[t], m_dZ[t]);
+		MATRIX_OPERATION::compute_weigths(m_dW, m_hiddenStates[t], m_dZ[t]);
 	}
 
+	// Normalizing the gradients
 	double norm = 1.0 / _hyper.batch_size;
 	m_dU *= norm;
 	m_dW *= norm;
-}
-
-Matrix RNN::activate(Matrix& inputs) {
-
-	Matrix output(inputs.rows(), inputs.cols());
-	for (size_t i = 0; i < inputs.rows(); i++)
-		for (size_t j = 0; j < inputs.cols(); j++)
-			output(i, j) = std::tanh(inputs(i, j));
-	return output;
-}
-Matrix RNN::deriv_activate(Matrix& inputs) {
-
-	Matrix output(inputs.rows(), inputs.cols());
-	for (size_t i = 0; i < inputs.rows(); ++i) {
-		for (size_t j = 0; j < inputs.cols(); ++j) {
-			double v = std::tanh(inputs(i, j));
-			output(i, j) = 1 - v * v;
-		}
-	}
-	return output;
-}
-
-Matrix RNN::softmax_activation(Matrix& inputs) {
-
-	d_vector maxs(inputs.rows());
-	for (size_t i = 0; i < inputs.rows(); i++) {
-		maxs[i] = inputs(i, 0);
-		for (size_t j = 0; j < inputs.cols(); j++)
-			if (inputs(i, j) > maxs[i])
-				maxs[i] = inputs(i, j);
-	}
-
-	Matrix expvalues = inputs;
-	d_vector sum_of_exps(inputs.rows(), 0);
-	for (size_t i = 0; i < inputs.rows(); i++) {
-		for (size_t j = 0; j < inputs.cols(); j++) {
-			expvalues(i, j) = std::exp(inputs(i, j) - maxs[i]);
-			sum_of_exps[i] += expvalues(i, j);
-		}
-	}
-
-	Matrix output(inputs.rows(), inputs.cols());
-	for (size_t i = 0; i < inputs.rows(); i++)
-		for (size_t j = 0; j < inputs.cols(); j++)
-			output(i, j) = expvalues(i, j) / sum_of_exps[i];
-
-	return output;
 }

@@ -20,7 +20,15 @@ void TrainerClassifier::set_data(Dataset& train, Dataset& validation) {
 	_yvalid = &validation.y;
 }
 
-void TrainerClassifier::run() {
+void TrainerClassifier::run(const bool store) {
+
+	// Store data init
+	d_vector CELoss;
+	d_vector train_acc_array;
+	d_vector val_acc_array;
+
+	// Early stopping
+	int nb_epochs = _hyper.max_epochs;
 
 	const int n_batches = _hyper.n_batch / _hyper.batch_size;
 	for (int epoch = 0; epoch < _hyper.max_epochs; epoch++) {
@@ -66,7 +74,22 @@ void TrainerClassifier::run() {
 			  "train_acc = ", train_accuracy, " % | ",
 			  "test_acc = ", val_accuracy, " %");
 
-		// Early stopper (very primitive for now. Have to implement it in the Scope)
-		if (val_accuracy > 99 && train_accuracy > 99) break;
+		// Storing data
+		if (store) {
+			// Accuracy
+			train_acc_array.push_back(train_accuracy);
+			val_acc_array.push_back(val_accuracy);
+
+			// Loss
+			CELoss.push_back(epoch_loss);
+		}
+
+		// Early stopper (very primitive for now. Might have to implement it in the Scope for better readability)
+		if (val_accuracy > 99 && train_accuracy > 99) {
+			nb_epochs = epoch;
+			break;
+		}
 	}
+	if (store)
+		writeFile(train_acc_array, val_acc_array, CELoss, nb_epochs, "training_data.csv");
 }

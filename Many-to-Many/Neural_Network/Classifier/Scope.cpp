@@ -1,5 +1,6 @@
 ﻿#include "Scope.hpp"
 
+// Constructor method
 Scope::Scope(RNN& model, const hyperparameters& hyper) : _hyper(hyper), t(1) {
 
 	auto params = model.getParameters();
@@ -10,11 +11,14 @@ Scope::Scope(RNN& model, const hyperparameters& hyper) : _hyper(hyper), t(1) {
 	}
 }
 
+// Adam optimizer (updating 'M', 'V', and 't' along each call)
+// Here, the 'k' represent the index of the Weights. If there is 5 different weights, there would be 5 different 'M' and 'V'.
 void Scope::Adam(Matrix& W, Matrix& dW, const int k) {
 
 	const double beta_1 = 0.9;
 	const double beta_2 = 0.999;
 
+	// 'k' indexing M and V
 	M[k] = M[k] * beta_1 + dW * (1 - beta_1);
 	V[k] = V[k] * beta_2 + dW.hadamard(dW) * (1 - beta_2);
 
@@ -30,6 +34,7 @@ void Scope::Adam(Matrix& W, Matrix& dW, const int k) {
 	}
 }
 
+// Stochastic Gradient Descent (could be used for biases for instance)
 void Scope::SGD(Matrix& W, Matrix& dW) {
 
 	W -= dW * _hyper.learning_rate;

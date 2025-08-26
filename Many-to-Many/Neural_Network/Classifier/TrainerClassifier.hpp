@@ -17,10 +17,11 @@ private:
 	std::vector<std::vector<Matrix>>* _yvalid;
 
 public:
+	// Constructor, set methods and run method.
 	TrainerClassifier(RNN&, const hyperparameters&);
 	void set_scope(Scope&);
 	void set_data(Dataset&, Dataset&);
-	void run();
+	void run(const bool store);
 };
 
 #endif
