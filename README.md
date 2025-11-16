@@ -1,5 +1,5 @@
 # Recurrent Neural Network (in CPP)
-The aim of this project was to program a many-to-one Recurrent Neural Network from scratch in C++.
+The aim of this project was to program a many-to-many Recurrent Neural Network from scratch in C++.
 
 ### Model
 - **Model:** Recurrent Neural Network,
@@ -17,9 +17,10 @@ Firstly, I created the RNN class, which uses three different weights. U for the 
 
 ### Dataset
 
-dataset.
+This dataset consists in synthetic data for a binary parity problem. Each example is a sequence of seq_len bits (0/1). At each time step t, the target is the cumulative parity sum(bits[0..t]) mod 2. The loader generates batches of size batch_size. The dataset is produced with random generation to ensure reproducibility.
 
 ### Hyperparameters
+
 We have two slightly different architectures. A many-to-many, and a many-to-one. Since the many-to-many is the one that gives the best results (since a RNN is good at predicting the next step), we are going to focus on this one.
 - I used a learning rate of $$5 \cdot 10^{-3}$$.
 - The inputs and outputs are vectors with dimension $$1$$.
@@ -32,7 +33,7 @@ We have two slightly different architectures. A many-to-many, and a many-to-one.
 
 ### Observations
 - Results on the binary nature of the sum of binary numbers database. When ran into the whole training database, the model gives the following results:
-![Plots](img/latest_output.png)
+![Plots](Many-to-Many/latest_output.png)
 
 Here, values are plotted after each epochs. The early stopper stopped 3 epochs before the end. We can see the training accuracy, validation accuracy and training loss for each epochs.
 
