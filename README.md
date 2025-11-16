@@ -40,15 +40,15 @@ Here, values are plotted after each epochs. The early stopper stopped 3 epochs b
 ### Discussion
 - A sequence with too much length is subject to the vanishing gradient issue.
 - **Next steps:**
-  - I didn't implement flooding. It could improve the model.
   - The next move would be to implement max-pooling layers and/or batch normalization, to lengthen the max sequence length we can have. It would help to tackle the vanishing gradient problem.
-  - For performance, we could also try alternative optimizers like RMSprop or Nadam. We could also experiment by implementing Dropout between fully connected layers.
+  - I didn't implement flooding. It could improve the model.
+  - For performance, we could also try alternative optimizers like RMSprop, AdamW or Nadam. We could also experiment by implementing Dropout between fully connected layers.
 
 ---
 
 ## How to Use
 
-- Run the ```RNN.bat``` file. To train, press 'y'. Any other input would lead to the test interface.
+- Run the ```RNN.bat``` file. It closes when it finished training (accuracy 100 for 3 epochs).
 - To plot the output of the training, run the ```plot.py``` file from the main folder.
 
 To change other hyperparameters, you must recompile everything for now. The command to compile is: ```mingw32-make -f MakeFile```.
@@ -65,42 +65,45 @@ To change other hyperparameters, you must recompile everything for now. The comm
 ## Repository Structure
 
 ```plaintext
+
 NeuralNetwork/
-│
-├── executable/
-│   ├── main.exe            # Main executable
-│   ├── model_weights.txt   # Save of the weights. Used to run the program without having to train it everytime
-│   └── xxx.dll             # C++ Dlls used in the main.exe file.
-│
-├── img/
-│   ├── latest_output.png
-│   ├── new_output.png
-│   └── old_output.png
-│
-├── Neural_Network/     # Main codes of the repository
-│   ├── Classifier/
-│   │   ├── Scope.cpp
-│   │   ├── Scope.hpp
-│   │   ├── TrainerClassifier.cpp
-│   │   └── TrainerClassifier.hpp
-│   ├── Dataset/
-│   │   └── Dataset.hpp
-│   ├── RNN/
-│   │   ├── RNN.cpp
-│   │   ├── RNN.hpp
-│   ├── Utilities/
-│   │   ├── functions.cpp
-│   │   ├── functions.hpp
-│   │   ├── Matrix.cpp
-│   │   └── Matrix.hpp
+├── Many-to-Many/
 │   │
-│   ├── main.cpp        # Main code that initiate all variables
-│   └── plot.py         # Run "py Neural_Network/plot.py" to get a plot of the result of the training
-│
-├── MakeFile
-├── RNN.bat             # Execute this file to test the program
-├── README.md           
-└── training_data.csv   # Output from the training process, to plot the loss and accuracy
+│   ├── executable/
+│   │   ├── main.exe            # Main executable
+│   │   ├── model_weights.txt   # Save of the weights. Used to run the program without having to train it everytime
+│   │   └── xxx.dll             # C++ Dlls used in the main.exe file.
+│   │
+│   ├── img/
+│   │   └── latest_output.png   # Output with 100 time steps
+│   │
+│   ├── Neural_Network/     # Main codes of the repository
+│   │   ├── Classifier/
+│   │   │   ├── Scope.cpp
+│   │   │   ├── Scope.hpp
+│   │   │   ├── TrainerClassifier.cpp
+│   │   │   └── TrainerClassifier.hpp
+│   │   ├── Dataset/
+│   │   │   └── Dataset.hpp
+│   │   ├── RNN/
+│   │   │   ├── RNN.cpp
+│   │   │   ├── RNN.hpp
+│   │   ├── Utilities/
+│   │   │   ├── functions.cpp
+│   │   │   ├── functions.hpp
+│   │   │   ├── Matrix.cpp
+│   │   │   └── Matrix.hpp
+│   │   │
+│   │   ├── main.cpp        # Main code that initiate all variables
+│   │   └── plot.py         # Run "py Neural_Network/plot.py" to get a plot of the result of the training
+│   │
+│   ├── MakeFile
+│   ├── RNN.bat             # Execute this file to test the program
+│   └── training_data.csv   # Output from the training process, to plot the loss and accuracy
+├── Many-to-One/
+├── └── Same
+└── README.md
+
 ```
 
 ---
