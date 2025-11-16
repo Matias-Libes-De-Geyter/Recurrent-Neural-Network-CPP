@@ -33,7 +33,7 @@ We have two slightly different architectures. A many-to-many, and a many-to-one.
 
 ### Observations
 - Results on the binary nature of the sum of binary numbers database. When ran into the whole training database, the model gives the following results:
-![Plots](Many-to-Many/latest_output.png)
+![Plots](Many-to-Many/img/latest_output.png)
 
 Here, values are plotted after each epochs. The early stopper stopped 3 epochs before the end. We can see the training accuracy, validation accuracy and training loss for each epochs.
 
